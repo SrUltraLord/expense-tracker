@@ -1,8 +1,5 @@
 import axios from "axios";
-
-const telegramClient = axios.create({
-  baseURL: "https://api.telegram.org",
-});
+import { telegramClient } from "../api/clients";
 
 export async function sendTelegramMessage(
   chatId: number,
