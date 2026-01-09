@@ -22,4 +22,8 @@ export const ERROR_MESSAGES: Record<AppErrors, MessageData> = {
     body: "Gasto procesado pero hubo un error al guardarlo. Intenta de nuevo.",
     footer: "",
   },
+  UNKNOWN_ERROR: {
+    title: "❌ Error desconocido",
+    body: "Ocurrió un error inesperado. Por favor, intenta nuevamente más tarde.",
+  },
 } as const;

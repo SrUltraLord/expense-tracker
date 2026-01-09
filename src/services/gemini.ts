@@ -1,23 +1,18 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import promptTemplate from "../assets/prompt.md";
-import { ExpenseData } from "../types";
+import { AppErrors, ExpenseData } from "../types";
 
 export class GeminiError extends Error {
-  constructor(public code: string, message: string) {
-    super(message);
-    this.name = "GeminiError";
+  constructor(public code: string) {
+    super();
   }
 }
 
-export async function processWithGemini(
-  description: string,
-  apiKey: string
+export async function processTextWithGemini(
+  apiKey: string,
+  text: string
 ): Promise<ExpenseData | null> {
-  const now = new Date().toLocaleDateString("es-ES", {
-    timeZone: "America/Guayaquil",
-  });
-  let prompt = promptTemplate.replace("${currentDate}", now);
-  prompt += description;
+  const prompt = buildBasePrompt() + text;
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -25,16 +20,66 @@ export async function processWithGemini(
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text().trim();
+    const responseText = response.text().trim();
 
-    console.log("Gemini response:", text);
+    return parseGeminiResponse(responseText);
+  } catch (error: any) {
+    handleGeminiError(error);
+  }
+}
 
-    const jsonMatch = text.match(/\{[\s\S]*?\}/);
-    if (!jsonMatch) {
-      console.error("No JSON found in response");
-      return null;
+export async function processImageWithGemini(
+  apiKey: string,
+  imageData: ArrayBuffer,
+  caption?: string
+): Promise<ExpenseData | null> {
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const parts = [{ text: buildBasePrompt() }];
+
+    if (caption) {
+      parts.push({ text: `\n\nContexto adicional: ${caption}` });
     }
 
+    const bytes = new Uint8Array(imageData);
+    const base64Image = btoa(String.fromCharCode(...bytes));
+
+    parts.push({
+      inlineData: {
+        data: base64Image,
+        mimeType: "image/jpeg",
+      },
+    } as any);
+
+    const result = await model.generateContent(parts);
+    const response = await result.response;
+    const responseText = response.text().trim();
+
+    return parseGeminiResponse(responseText);
+  } catch (error: any) {
+    handleGeminiError(error);
+  }
+}
+
+function buildBasePrompt(): string {
+  const now = new Date().toLocaleDateString("es-ES", {
+    timeZone: "America/Guayaquil",
+  });
+  return promptTemplate.replace("${currentDate}", now);
+}
+
+function parseGeminiResponse(responseText: string): ExpenseData | null {
+  console.log("Gemini response:", responseText);
+
+  const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
+  if (!jsonMatch) {
+    console.error("No JSON found in response");
+    return null;
+  }
+
+  try {
     const parsed: ExpenseData = JSON.parse(jsonMatch[0]);
 
     if (!parsed || parsed === null) {
@@ -45,31 +90,27 @@ export async function processWithGemini(
       ...parsed,
       date: new Date(parsed.date),
     } as ExpenseData;
-  } catch (error: any) {
-    console.error("Error processing with Gemini:", error);
-
-    // Detectar error 503 (servicio sobrecargado)
-    if (
-      error?.message?.includes("503") ||
-      error?.message?.includes("overloaded")
-    ) {
-      throw new GeminiError(
-        "SERVICE_OVERLOADED",
-        "El servicio de IA está temporalmente sobrecargado"
-      );
-    }
-
-    // Detectar otros errores de red
-    if (
-      error?.message?.includes("fetch") ||
-      error?.message?.includes("network")
-    ) {
-      throw new GeminiError(
-        "NETWORK_ERROR",
-        "Error de conexión con el servicio de IA"
-      );
-    }
-
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
     return null;
   }
+}
+
+function handleGeminiError(error: any): never {
+  console.error("Error processing with Gemini:", error);
+
+  const message = error?.message;
+  const isOverloadError =
+    message?.includes("503") || message?.includes("overloaded");
+  if (isOverloadError) {
+    throw new GeminiError(AppErrors.SERVICE_OVERLOADED);
+  }
+
+  const isNetworkError =
+    message?.includes("fetch") || message?.includes("network");
+  if (isNetworkError) {
+    throw new GeminiError(AppErrors.NETWORK_ERROR);
+  }
+
+  throw error;
 }

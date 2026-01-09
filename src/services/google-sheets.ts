@@ -11,9 +11,9 @@ const SHEET_NAME = "2026";
 const TABLE_NAME = "Gastos_2026";
 
 export async function saveToGoogleSheets(
-  expense: ExpenseData,
   credentials: string,
-  spreadsheetId: string
+  spreadsheetId: string,
+  expense: ExpenseData
 ): Promise<boolean> {
   try {
     const creds: ServiceAccountCredentials = JSON.parse(credentials);

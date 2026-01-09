@@ -22,15 +22,12 @@ export function formatErrorMessage(
   errorCode: AppErrors,
   context?: string
 ): string {
-  const error = ERROR_MESSAGES[errorCode];
+  const { title, body, footer } = ERROR_MESSAGES[errorCode];
 
-  return `
-<b>${error.title}</b>
+  return `<b>${title}</b>
 
-${error.body}${context ? `\n\n${context}` : ""}${
-    error.footer ? `\n\n<i>${error.footer}</i>` : ""
-  }
-`.trim();
+${body} ${context ? `${context}` : ""}
+${footer ? `\n<i>${footer}</i>` : ""}`.trim();
 }
 
 export function formatUserMessage({
@@ -42,7 +39,5 @@ export function formatUserMessage({
 <b>${title}</b>
 
 ${body}
-
-${footer ? `<i>${footer}</i>` : ""}
-`.trim();
+${footer ? `\n<i>${footer}</i>` : ""}`.trim();
 }
