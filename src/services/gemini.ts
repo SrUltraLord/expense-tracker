@@ -13,11 +13,11 @@ export async function processWithGemini(
   description: string,
   apiKey: string
 ): Promise<ExpenseData | null> {
-  const prompt =
-    promptTemplate.replace(
-      "${currentDate}",
-      new Date().toISOString().split("T")[0]
-    ) + description;
+  const now = new Date().toLocaleDateString("es-ES", {
+    timeZone: "America/Guayaquil",
+  });
+  let prompt = promptTemplate.replace("${currentDate}", now);
+  prompt += description;
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);

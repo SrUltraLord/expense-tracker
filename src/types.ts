@@ -1,3 +1,9 @@
+export enum AppErrors {
+  SERVICE_OVERLOADED = "SERVICE_OVERLOADED",
+  NETWORK_ERROR = "NETWORK_ERROR",
+  SAVE_ERROR = "SAVE_ERROR",
+}
+
 export type ExpenseCategory = "needs" | "wants" | "savings";
 
 export type ExpenseData = {

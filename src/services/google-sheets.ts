@@ -5,6 +5,7 @@ import {
   ServiceAccountCredentials,
 } from "../utils/jwt-utils";
 import { googleOAuthClient, googleSheetsClient } from "../api/clients";
+import { getCategoryDisplay } from "../utils/user-message-utils";
 
 const SHEET_NAME = "2026";
 const TABLE_NAME = "Gastos_2026";
@@ -49,7 +50,7 @@ export async function saveToGoogleSheets(
 
     const rowValues = [
       expense.description,
-      getSheetsCategory(expense.category),
+      getCategoryDisplay(expense.category),
       expense.subCategory ?? "-",
       new Date(expense.date).toISOString().split("T")[0],
       expense.amount,
@@ -105,15 +106,6 @@ export async function saveToGoogleSheets(
     }
     return false;
   }
-}
-
-function getSheetsCategory(category: ExpenseCategory): string {
-  const categoryMap: Record<ExpenseCategory, string> = {
-    needs: "Necesidades",
-    wants: "Deseos",
-    savings: "Inversión",
-  };
-  return categoryMap[category];
 }
 
 function mapValue(value: any) {
