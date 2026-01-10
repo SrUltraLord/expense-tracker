@@ -73,6 +73,10 @@ bunx wrangler secret put GOOGLE_SPREADSHEET_ID
 
 # Token secreto para verificar webhooks (genera uno aleatorio)
 bunx wrangler secret put SECRET_TOKEN
+
+# IDs de chat autorizados - opcional (separados por comas: 123456789,987654321)
+# Si no se configura, cualquiera puede usar el bot
+bunx wrangler secret put ALLOWED_CHAT_IDS
 ```
 
 ### 5. Configurar el Webhook de Telegram
@@ -157,13 +161,15 @@ expense-tracker/
 
 ## 🔧 Variables de Entorno
 
-| Variable                             | Descripción                                 |
-| ------------------------------------ | ------------------------------------------- |
-| `TELEGRAM_BOT_TOKEN`                 | Token del bot de Telegram                   |
-| `GEMINI_API_KEY`                     | API key de Google Gemini                    |
-| `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` | Credenciales JSON de Google Service Account |
-| `GOOGLE_SPREADSHEET_ID`              | ID de la hoja de cálculo                    |
-| `SECRET_TOKEN`                       | Token secreto para verificar webhooks       |
+| Variable                             | Descripción                                       | Requerido   |
+| ------------------------------------ | ------------------------------------------------- | ----------- |
+| `TELEGRAM_BOT_TOKEN`                 | Token del bot de Telegram                         | ✅          |
+| `GEMINI_API_KEY`                     | API key de Google Gemini                          | ✅          |
+| `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` | Credenciales JSON de Google Service Account       | ✅          |
+| `GOOGLE_SPREADSHEET_ID`              | ID de la hoja de cálculo                          | ✅          |
+| `SECRET_TOKEN`                       | Token secreto para verificar webhooks             | ✅          |
+| `ALLOWED_CHAT_IDS`                   | IDs de usuarios autorizados (separados por comas) | ⚠️ Opcional |
+| `SECRET_TOKEN`                       | Token secreto para verificar webhooks             |
 
 ## 🛠️ Tecnologías
 
