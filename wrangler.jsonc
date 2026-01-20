@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "expense-tracker",
   "main": "src/index.ts",
-  "compatibility_date": "2026-01-06",
+  "compatibility_date": "2025-12-10",
   "compatibility_flags": ["nodejs_compat"],
   "dev": {
     "port": 8787,
@@ -23,7 +23,7 @@
     // Puedes poner variables no sensibles aquí si las necesitas
     // "ENVIRONMENT": "production"
   }
-  
+
   // Los secrets se configuran con wrangler secret put
   // No los pongas aquí
 }

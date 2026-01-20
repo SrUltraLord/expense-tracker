@@ -1,12 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import promptTemplate from "../assets/prompt.md";
-import { AppErrors, ExpenseData } from "../types";
-
-export class GeminiError extends Error {
-  constructor(public code: string) {
-    super();
-  }
-}
+import { AppErrors, ExpenseData, AppError } from "../types";
 
 export async function processTextWithGemini(
   apiKey: string,
@@ -64,10 +58,10 @@ export async function processImageWithGemini(
 }
 
 function buildBasePrompt(): string {
-  const now = new Date().toLocaleDateString("es-ES", {
-    timeZone: "America/Guayaquil",
-  });
-  return promptTemplate.replace("${currentDate}", now);
+  const now = new Date();
+  const isoDate = now.toISOString().split("T")[0];
+
+  return promptTemplate.replace("${currentDate}", isoDate);
 }
 
 function parseGeminiResponse(responseText: string): ExpenseData | null {
@@ -103,13 +97,13 @@ function handleGeminiError(error: any): never {
   const isOverloadError =
     message?.includes("503") || message?.includes("overloaded");
   if (isOverloadError) {
-    throw new GeminiError(AppErrors.SERVICE_OVERLOADED);
+    throw new AppError(AppErrors.SERVICE_OVERLOADED);
   }
 
   const isNetworkError =
     message?.includes("fetch") || message?.includes("network");
   if (isNetworkError) {
-    throw new GeminiError(AppErrors.NETWORK_ERROR);
+    throw new AppError(AppErrors.NETWORK_ERROR);
   }
 
   throw error;

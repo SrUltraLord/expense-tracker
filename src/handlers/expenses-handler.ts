@@ -1,21 +1,25 @@
 import { Context } from "hono";
 import {
-  sendTelegramMessage,
-  getTelegramFile,
-  downloadTelegramFile,
-} from "../services/telegram";
-import {
-  processTextWithGemini,
   processImageWithGemini,
-  GeminiError,
+  processTextWithGemini,
 } from "../services/gemini";
 import { saveToGoogleSheets } from "../services/google-sheets";
+import {
+  downloadTelegramFile,
+  getTelegramFile,
+  sendTelegramMessage,
+} from "../services/telegram";
+import {
+  AppError,
+  ExpenseData,
+  TelegramMessage,
+  TelegramMessageRequest,
+} from "../types";
 import {
   buildExpenseSummaryMessage,
   formatErrorMessage,
   formatUserMessage,
 } from "../utils/user-message-utils";
-import { TelegramMessage, TelegramPhotoSize, ExpenseData } from "../types";
 
 export async function expensesHandler(context: Context): Promise<Response> {
   const {
@@ -25,7 +29,7 @@ export async function expensesHandler(context: Context): Promise<Response> {
     TELEGRAM_BOT_TOKEN: telegramToken,
   } = context.env;
 
-  const { message } = await context.req.json<{ message: TelegramMessage }>();
+  const { message } = await context.req.json<TelegramMessageRequest>();
   if (!message) {
     return context.json({ ok: true });
   }
@@ -78,7 +82,7 @@ export async function expensesHandler(context: Context): Promise<Response> {
 
     return context.json({ ok: true });
   } catch (error) {
-    if (error instanceof GeminiError) {
+    if (error instanceof AppError) {
       const userMessage = formatErrorMessage(error.code as any);
 
       await sendTelegramMessage(telegramToken, chatId, userMessage);
