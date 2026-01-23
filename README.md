@@ -1,29 +1,26 @@
 # 💰 Expense Tracker Bot
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange.svg)](https://workers.cloudflare.com/)
+[![Hono](https://img.shields.io/badge/Hono-4.11+-green.svg)](https://hono.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Bot de Telegram para rastrear gastos automáticamente usando IA. Envía un mensaje describiendo tu gasto y el bot lo procesa, categoriza y guarda en Google Sheets.
 
 ## ✨ Características
 
-- 🤖 **IA Integrada**: Utiliza Google Gemini para interpretar mensajes en lenguaje natural
-- 📊 **Google Sheets**: Almacena automáticamente todos tus gastos en una hoja de cálculo
-- ⚡ **Cloudflare Workers**: Infraestructura serverless ultra-rápida y escalable
-- 🔒 **Seguro**: Verificación de tokens y autenticación de webhooks
-- 🌐 **TypeScript**: Code base completamente tipado
+- 🤖 **IA Integrada**: Utiliza Google Gemini 2.5 Flash para interpretar mensajes en lenguaje natural
+- 📸 **Escaneo de Recibos**: Procesa imágenes de tickets y facturas automáticamente
+- 📊 **Google Sheets**: Almacena todos tus gastos en una hoja de cálculo organizada
+- 🏷️ **Categorización Inteligente**: Clasifica gastos en needs/wants/savings automáticamente
+- ⚡ **Cloudflare Workers**: Infraestructura serverless ultra-rápida y escalable (<50ms de latencia)
+- 🔒 **Seguro**: Verificación de tokens, autenticación de webhooks y control de acceso por usuario
+- 🌐 **TypeScript**: Code base completamente tipado para máxima confiabilidad
+- 🆓 **Tier Gratuito**: Funciona completamente en planes gratuitos de Cloudflare y Google
 
 ## 🏗️ Arquitectura
 
-```
-┌─────────────┐      ┌──────────────────┐      ┌─────────────┐
-│  Telegram   │─────▶│ Cloudflare Worker│─────▶│   Gemini AI │
-│    User     │      │   (Hono Server)  │      └─────────────┘
-└─────────────┘      └──────────────────┘
-                              │
-                              ▼
-                     ┌──────────────────┐
-                     │  Google Sheets   │
-                     │    API Storage   │
-                     └──────────────────┘
-```
+![Arquitectura Expense Tracker Bot](./src/assets/img/architecture.png)
 
 ## 📋 Requisitos
 
@@ -116,7 +113,9 @@ bun run deploy
 
 ## 📝 Uso
 
-Una vez configurado, simplemente envía mensajes a tu bot:
+Una vez configurado, simplemente envía mensajes a tu bot de las siguientes formas:
+
+### 💬 Mensajes de Texto
 
 **Ejemplos:**
 
@@ -124,13 +123,29 @@ Una vez configurado, simplemente envía mensajes a tu bot:
 - "Pagué 1200 de renta"
 - "30 dólares en uber"
 - "Compré café por $5"
+- "Almuerzo 15 USD"
+- "Cena en restaurante 45 dólares"
+
+### 📸 Imágenes de Recibos
+
+Envía una foto del ticket o factura y el bot extraerá:
+
+- Monto total
+- Fecha de compra
+- Descripción del establecimiento
+- Categoría apropiada
+
+**Tip:** Puedes añadir un caption a la imagen para dar contexto adicional.
+
+### 🎯 Proceso Automático
 
 El bot automáticamente:
 
-1. ✅ Extrae el monto
-2. ✅ Identifica la categoría
-3. ✅ Guarda en Google Sheets
-4. ✅ Te confirma el registro
+1. ✅ Extrae el monto y fecha
+2. ✅ Identifica la categoría (needs/wants/savings)
+3. ✅ Asigna subcategoría (supermercado, transporte, etc.)
+4. ✅ Guarda en Google Sheets
+5. ✅ Te confirma el registro con un resumen
 
 ## 🗂️ Estructura del Proyecto
 
@@ -161,27 +176,67 @@ expense-tracker/
 
 ## 🔧 Variables de Entorno
 
-| Variable                             | Descripción                                       | Requerido   |
-| ------------------------------------ | ------------------------------------------------- | ----------- |
-| `TELEGRAM_BOT_TOKEN`                 | Token del bot de Telegram                         | ✅          |
-| `GEMINI_API_KEY`                     | API key de Google Gemini                          | ✅          |
-| `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` | Credenciales JSON de Google Service Account       | ✅          |
-| `GOOGLE_SPREADSHEET_ID`              | ID de la hoja de cálculo                          | ✅          |
-| `SECRET_TOKEN`                       | Token secreto para verificar webhooks             | ✅          |
-| `ALLOWED_CHAT_IDS`                   | IDs de usuarios autorizados (separados por comas) | ⚠️ Opcional |
-| `SECRET_TOKEN`                       | Token secreto para verificar webhooks             |
+| Variable                             | Descripción                                                     | Requerido |
+| ------------------------------------ | --------------------------------------------------------------- | --------- |
+| `TELEGRAM_BOT_TOKEN`                 | Token del bot de Telegram                                       | ✅        |
+| `GEMINI_API_KEY`                     | API key de Google Gemini 2.5 Flash                              | ✅        |
+| `GOOGLE_SERVICE_ACCOUNT_CREDENTIALS` | Credenciales JSON completas de Google Service Account           | ✅        |
+| `GOOGLE_SPREADSHEET_ID`              | ID de la hoja de cálculo (de la URL)                            | ✅        |
+| `SECRET_TOKEN`                       | Token secreto para verificar webhooks (genera uno aleatorio)    | ✅        |
+| `ALLOWED_CHAT_IDS`                   | IDs de usuarios autorizados separados por comas (ej: `123,456`) | ❌        |
+
+> **Nota:** Si no configuras `ALLOWED_CHAT_IDS`, cualquier usuario podrá usar tu bot.
+
+## 🏷️ Categorización de Gastos
+
+El bot categoriza automáticamente tus gastos usando el método 50/30/20:
+
+### 📌 **Needs** (Necesidades - 50%)
+
+Gastos esenciales para vivir:
+
+- 🍽️ Alimentación básica (supermercado, mercado)
+- 🏠 Vivienda (renta, hipoteca, servicios)
+- 🚌 Transporte esencial (gasolina, transporte público)
+- 💊 Salud (medicamentos, consultas)
+- 📚 Educación
+
+### 🎯 **Wants** (Deseos - 30%)
+
+Gastos no esenciales que mejoran tu calidad de vida:
+
+- 🍕 Restaurantes y delivery
+- ☕ Cafeterías
+- 🎬 Entretenimiento (cine, conciertos)
+- 👕 Ropa no esencial
+- 📺 Suscripciones (Netflix, Spotify)
+
+### 💰 **Savings** (Ahorros - 20%)
+
+Inversiones y ahorro:
+
+- 📈 Inversiones
+- 🏦 Ahorro formal
+- 🚨 Fondos de emergencia
 
 ## 🛠️ Tecnologías
 
-- [Hono](https://hono.dev/) - Framework web ultrarrápido
-- [Cloudflare Workers](https://workers.cloudflare.com/) - Serverless platform
-- [Google Gemini](https://ai.google.dev/) - Procesamiento de lenguaje natural
-- [Google Sheets API](https://developers.google.com/sheets/api) - Almacenamiento de datos
-- [Telegram Bot API](https://core.telegram.org/bots/api) - Interfaz de chat
+- [Hono](https://hono.dev/) - Framework web ultrarrápido para Edge Computing
+- [Cloudflare Workers](https://workers.cloudflare.com/) - Plataforma serverless global
+- [Google Gemini 2.5 Flash](https://ai.google.dev/) - Modelo de IA para procesamiento de lenguaje natural e imágenes
+- [Google Sheets API](https://developers.google.com/sheets/api) - Almacenamiento estructurado de datos
+- [Telegram Bot API](https://core.telegram.org/bots/api) - Interfaz conversacional
+- [TypeScript](https://www.typescriptlang.org/) - Lenguaje de programación tipado
+- [Bun](https://bun.sh/) - Runtime y package manager ultra-rápido
 
 ## 📄 Licencia
 
 MIT
+
+## 🗺️ Roadmap
+
+- [ ] Comandos del bot (`/stats`, `/export`, `/cancel`)
+- [ ] Alertas de presupuesto
 
 ## 🤝 Contribuir
 
@@ -195,6 +250,4 @@ Las contribuciones son bienvenidas. Por favor:
 
 ## 📧 Contacto
 
-David - [@SrUltraLord](https://github.com/SrUltraLord)
-
-Project Link: [https://github.com/SrUltraLord/expense-tracker](https://github.com/SrUltraLord/expense-tracker)
+- David Reyes - [@SrUltraLord](https://github.com/SrUltraLord)
