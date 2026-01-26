@@ -25,7 +25,7 @@ Formato de respuesta requerido:
 ## REGLAS:
 
 1. Si no puedes extraer la información, responde: null
-2. Si falta la fecha, usa la fecha actual: "${currentDate}"
+2. Si falta la fecha, usa la fecha actual: "${currentDate}" (formato YYYY-MM-DD)
 3. Convierte cualquier moneda a número decimal (ej: "$1,234.56" → 1234.56)
 4. La descripción debe ser concisa pero descriptiva
 5. Categoriza según el contexto y tipo de gasto

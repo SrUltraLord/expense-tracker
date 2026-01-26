@@ -12,7 +12,7 @@ export function getCategoryDisplay(category: ExpenseCategory): string {
   const categoryMap: Record<ExpenseCategory, string> = {
     needs: "Necesidades",
     wants: "Deseos",
-    savings: "Inversión",
+    savings: "Ahorros",
   };
 
   return categoryMap[category];
