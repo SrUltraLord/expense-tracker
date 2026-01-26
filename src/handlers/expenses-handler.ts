@@ -9,6 +9,7 @@ import {
   getTelegramFile,
   sendTelegramMessage,
 } from "../services/telegram";
+
 import {
   AppError,
   ExpenseData,
@@ -21,12 +22,12 @@ import {
   formatUserMessage,
 } from "../utils/user-message-utils";
 
-export async function expensesHandler(context: Context): Promise<Response> {
+export async function handleExpense(context: Context): Promise<Response> {
   const {
-    GEMINI_API_KEY: geminiKey,
-    GOOGLE_SERVICE_ACCOUNT_CREDENTIALS: googleCredentials,
-    GOOGLE_SPREADSHEET_ID: spreadsheetId,
-    TELEGRAM_BOT_TOKEN: telegramToken,
+    GEMINI_API_KEY,
+    GOOGLE_SERVICE_ACCOUNT_CREDENTIALS,
+    GOOGLE_SPREADSHEET_ID,
+    TELEGRAM_BOT_TOKEN,
   } = context.env;
 
   const { message } = await context.req.json<TelegramMessageRequest>();
@@ -38,9 +39,9 @@ export async function expensesHandler(context: Context): Promise<Response> {
 
   try {
     const expenseResponse = await analyzeUserMessageWithGemini(
-      geminiKey,
-      telegramToken,
-      message
+      GEMINI_API_KEY,
+      TELEGRAM_BOT_TOKEN,
+      message,
     );
 
     if (!expenseResponse) {
@@ -49,15 +50,15 @@ export async function expensesHandler(context: Context): Promise<Response> {
         body: "Tu mensaje no contiene suficiente información para registrar un gasto.",
       });
 
-      await sendTelegramMessage(telegramToken, chatId, userMessage);
+      await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, userMessage);
 
       return context.json({ ok: true });
     }
 
     const isSaved = await saveToGoogleSheets(
-      googleCredentials,
-      spreadsheetId,
-      expenseResponse
+      GOOGLE_SERVICE_ACCOUNT_CREDENTIALS,
+      GOOGLE_SPREADSHEET_ID,
+      expenseResponse,
     );
 
     if (!isSaved) {
@@ -67,7 +68,7 @@ export async function expensesHandler(context: Context): Promise<Response> {
         footer: "🕑 Inténtalo de nuevo más tarde.",
       });
 
-      await sendTelegramMessage(telegramToken, chatId, userMessage);
+      await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, userMessage);
 
       return context.json({ ok: false });
     }
@@ -78,14 +79,14 @@ export async function expensesHandler(context: Context): Promise<Response> {
       footer: "¡Sigue manteniendo tus finanzas en orden! 🚀",
     });
 
-    await sendTelegramMessage(telegramToken, chatId, userMessage);
+    await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, userMessage);
 
     return context.json({ ok: true });
   } catch (error) {
     if (error instanceof AppError) {
       const userMessage = formatErrorMessage(error.code as any);
 
-      await sendTelegramMessage(telegramToken, chatId, userMessage);
+      await sendTelegramMessage(TELEGRAM_BOT_TOKEN, chatId, userMessage);
       return context.json({ ok: true, error: error.code });
     }
 
@@ -97,7 +98,7 @@ export async function expensesHandler(context: Context): Promise<Response> {
 async function analyzeUserMessageWithGemini(
   geminiKey: string,
   telegramToken: string,
-  message: TelegramMessage
+  message: TelegramMessage,
 ): Promise<ExpenseData | null> {
   const { text, caption, photo: photos } = message;
 
@@ -106,7 +107,7 @@ async function analyzeUserMessageWithGemini(
     const { file_id: fileId } = photos[photos.length - 1];
     const { file_path: filePath } = await getTelegramFile(
       telegramToken,
-      fileId
+      fileId,
     );
     if (!filePath) {
       throw new Error("No se pudo obtener la ruta del archivo");

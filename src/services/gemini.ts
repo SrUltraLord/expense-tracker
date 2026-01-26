@@ -1,10 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import promptTemplate from "../assets/prompt.md";
-import { AppErrors, ExpenseData, AppError } from "../types";
+import { AppError, AppErrors, ExpenseData } from "../types";
 
 export async function processTextWithGemini(
   apiKey: string,
-  text: string
+  text: string,
 ): Promise<ExpenseData | null> {
   const prompt = buildBasePrompt() + text;
 
@@ -12,8 +12,7 @@ export async function processTextWithGemini(
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const { response } = await model.generateContent(prompt);
     const responseText = response.text().trim();
 
     return parseGeminiResponse(responseText);
@@ -25,7 +24,7 @@ export async function processTextWithGemini(
 export async function processImageWithGemini(
   apiKey: string,
   imageData: ArrayBuffer,
-  caption?: string
+  caption?: string,
 ): Promise<ExpenseData | null> {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
